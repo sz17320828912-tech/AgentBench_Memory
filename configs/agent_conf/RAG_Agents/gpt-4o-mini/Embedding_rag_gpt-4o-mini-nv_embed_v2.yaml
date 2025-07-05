@@ -1,0 +1,8 @@
+agent_name: Embedding_rag_nv_embed_v2
+model: gpt-4o-mini
+temperature: 0.7
+input_length_limit: 10000000
+buffer_length: 200
+output_dir: ./outputs/gpt-4o-mini-nv_embed_v2
+
+retrieve_num: 10
