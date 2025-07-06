@@ -121,6 +121,10 @@ def process_queries_for_context(agent, query_answer_pairs, dataset_config, metri
             query_index += 1
             continue
         
+        # Check if we've reached the query limit for ablation studies
+        if has_reached_query_limit(max_queries, query_index):
+            break
+        
         # Process the current query
         metrics, results = process_single_query(
             agent, query, answer, dataset_config, metrics, results, query_index, context_index, uuid
@@ -131,10 +135,6 @@ def process_queries_for_context(agent, query_answer_pairs, dataset_config, metri
         save_results_to_file(output_path, agent_config, dataset_config, results, 
                            metrics, time_cost_list, start_time)
         
-        # Check if we've reached the query limit for ablation studies
-        if has_reached_query_limit(max_queries, query_index):
-            break
-    
     return metrics, results, query_index
 
 
@@ -142,14 +142,14 @@ def process_context(context_index, context_chunks, query_answer_pairs, agent_con
                    metrics, results, query_index, last_processed_context_id, last_processed_query_id,
                    max_queries, output_path, time_cost_list, start_time, force_rerun, total_contexts):
     """Process a single context and its queries."""
-    # Break early if we've reached the query limit
-    if has_reached_query_limit(max_queries, query_index):
-        return metrics, results, query_index, True
-    
     # Skip contexts that have already been fully processed
     if should_skip_context(force_rerun, context_index, last_processed_context_id):
         logger.info(f"\n\n!!!!!Experiment {context_index} already finished, skipping...\n")
         return metrics, results, query_index + len(query_answer_pairs), False
+    
+    # Break early if we've reached the query limit
+    if has_reached_query_limit(max_queries, query_index):
+        return metrics, results, query_index, True
     
     # Initialize agent for the current context
     agent_save_folder = generate_agent_save_folder(agent_config, dataset_config, context_index)

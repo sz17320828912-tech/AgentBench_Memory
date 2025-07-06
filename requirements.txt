@@ -1,77 +1,27 @@
-# Core ML/AI Libraries
+# Core Python packages
+numpy
+pandas
+pillow
+tqdm
+dill
+toml
+dotenv
+
+# Machine Learning & Deep Learning
 torch
 torchvision
 transformers
-accelerate
+tokenizers
+tiktoken
+timm
+datasets
+sentence_transformers
 bitsandbytes
-deepspeed
 flash-attn
+deepspeed
 minference
 
-# OpenAI and Anthropic
-openai
-anthropic
-tiktoken
-
-# AI/ML Services and Clients
-google-genai
-mistralai
-letta_client
-
-# LlamaIndex Ecosystem
-llama-cloud
-llama-cloud-services
-llama-index
-llama-index-agent-openai
-llama-index-cli
-llama-index-core
-llama-index-embeddings-openai
-llama-index-indices-managed-llama-cloud
-llama-index-llms-openai
-llama-index-multi-modal-llms-openai
-llama-index-program-openai
-llama-index-question-gen-openai
-llama-index-readers-file
-llama-index-readers-llama-parse
-llama-parse
-
-# Data Processing
-numpy
-pandas
-datasets
-dill
-
-# NLP Libraries
-nltk
-sentence_transformers
-spacy
-rank_bm25
-langdetect
-
-# Computer Vision
-pillow
-timm
-
-# Vector Databases and Search
-faiss-gpu
-qdrant_client
-pgvector
-lancedb
-
-# LangChain Ecosystem
-langchain
-langchain-cohere
-langchain-community
-langchain-core
-langchain-experimental
-langchain-groq
-langchain-openai
-langchain-text-splitters
-
-# Memory and Knowledge Management
-mem0ai
-
-# NVIDIA CUDA Libraries
+# NVIDIA CUDA packages
 nvidia-cublas-cu12
 nvidia-cuda-cupti-cu12
 nvidia-cuda-nvrtc-cu12
@@ -85,126 +35,60 @@ nvidia-nccl-cu12
 nvidia-nvjitlink-cu12
 nvidia-nvtx-cu12
 
-# Web Framework and API
-fastapi
+# NLP & Text Processing
+nltk
+spacy
+semantic_text_splitter
+langdetect
+editdistance
+rank_bm25
+
+# LangChain ecosystem
+langchain
+langchain-cohere
+langchain-community
+langchain-core
+langchain-experimental
+langchain-groq
+langchain-openai
+langchain-text-splitters
+
+# AI/LLM APIs
+openai
+anthropic
+google-genai
+litellm
+instructor
+
+# Database & Vector Storage
+psycopg2
+pgvector
+qdrant_client
+lancedb
+faiss-gpu
+igraph
+
+# Web & API
 fastapi_users
 fastapi-users-db-sqlalchemy
-starlette
+frontend
 
-# Database and ORM
-psycopg2
-sqlalchemy
-aiosqlite
-alembic
-marshmallow-sqlalchemy
-
-# Text Processing and Utilities
-semantic_text_splitter
-editdistance
+# Development & Testing
 rouge_score
-html2text
-inflect
-dirtyjson
-
-# Development and Debugging
+deepeval
 ipdb
 swe-rex
-black
-isort
-griffe
-datamodel-code-generator
-grpcio-tools
 
-# Data Validation and Serialization
-pydantic
-pydantic-core
-instructor
-genson
-
-# Async and Concurrency
-aiomultiprocess
-
-# Scheduling and Task Management
-apscheduler
-
-# CLI and Command Line Tools
-argcomplete
-
-# Testing and Mock Data
-faker
-
-# Utilities
-tqdm
-toml
-dotenv
-typing-extensions
-structlog
-coloredlogs
-humanfriendly
-limits
-banks
-brotli
-importlib-metadata
-mcp
-
-# AWS and Cloud Storage
-boto3
-s3fs
-s3transfer
-
-# Visualization
+# Utilities & Infrastructure
 matplotlib
+structlog
+limits
 graphistry
-
-# File Processing
-filetype
-demjson3
-pypdf
-
-# Web Scraping and Processing
-frontend
-beautifulsoup4
-
-# Workflow and Integration
-composio
-owlready2
+s3fs
 dlt
-litellm
+mem0ai
+accelerate
 
-# Graph Processing
-igraph
-gritlm
 
-# Machine Learning Evaluation
-deepeval
-
-# Database Migration and Templating
-Mako
-
-# Monitoring and Logging
-langfuse
-
-# OpenTelemetry (Observability)
-opentelemetry-api
-opentelemetry-exporter-otlp
-opentelemetry-exporter-otlp-proto-common
-opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-exporter-otlp-proto-http
-opentelemetry-instrumentation
-opentelemetry-instrumentation-requests
-opentelemetry-proto
-opentelemetry-sdk
-opentelemetry-semantic-conventions
-opentelemetry-util-http
-
-# ONNX Runtime
-onnxruntime
-
-# Lance Database
-flatbuffers
-
-# File System
-fsspec
-
-# Lance (Database)
-pylance
+# Cognee
+owlready2

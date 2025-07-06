@@ -9,7 +9,7 @@ root=$(pwd)
 
 file_name=rag_agents_test.txt
 
-for line in 16
+for line in {15..16}
     do
         cfg=$(sed -n "$line"p ${root}/bash_files/configs/${file_name})
         agent_config=$(echo $cfg | cut -f 1 -d ' ')

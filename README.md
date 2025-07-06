@@ -23,7 +23,7 @@ We did not include the `hipporag` in `requirements.txt` since the current versio
 Sometimes you can try to supplement the lacked packages for `cognee` and `letta`. If you met some package related errors after installing `requirements.txt`. 
 ```
 pip install letta
-pip uninstall letta
+pip uninstall letta   
 pip install cognee
 pip uninstall cognee
 ```
@@ -34,7 +34,7 @@ To use this project, you need to download the processed data files and place the
 
 ### 1. Download the Data from HuggingFace 🤗 
 
-- HuggingFace dataset [link](https://huggingface.co/datasets/ai-hyz/MemoryAgentBench). It can be automatically downloaded. 
+- HuggingFace dataset [link](https://huggingface.co/datasets/ai-hyz/MemoryAgentBench). It can be automatically downloaded if you run the code directly. 
 
 - Do not forget the `entity2id.json` for Movie Recommendation task.
 
