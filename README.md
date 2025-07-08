@@ -2,7 +2,14 @@
 
 This project benchmarks agents with memory capabilities. Follow the steps below to set up your environment and install dependencies.
 
-## 🚀 Quick Start
+## 🚧 Update
+
+- [x] (July 7th, 2025) We released the code for reproducing the main experiment. 
+
+**🌟 More details coming soon! 🌟**
+
+
+## 🚀 Quick Setup
 
 ### 1. Create a Conda Environment
 

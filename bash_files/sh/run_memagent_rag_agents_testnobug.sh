@@ -1,6 +1,6 @@
 source ~/.bashrc
 source /scratch/yzhu/anaconda3/etc/profile.d/conda.sh
-conda activate MABench_Open
+conda activate MABench
 
 export PYTHONUNBUFFERED=1
 export OMP_NUM_THREADS=1
@@ -9,7 +9,7 @@ root=$(pwd)
 
 file_name=rag_agents_test.txt
 
-for line in {15..16}
+for line in {5..16}
     do
         cfg=$(sed -n "$line"p ${root}/bash_files/configs/${file_name})
         agent_config=$(echo $cfg | cut -f 1 -d ' ')
