@@ -1,6 +1,8 @@
-# ⚙️ Benchmarking Agent with Memory
+# ⚙️ MemoryAgentBench: Evaluating Memory in LLM Agents via Incremental Multi-Turn Interactions
 
-This project benchmarks agents with memory capabilities. Follow the steps below to set up your environment and install dependencies.
+This project benchmarks agents with memory capabilities. Follow the steps below to set up your environment and install dependencies. 
+
+[Full paper](https://arxiv.org/abs/2507.05257)
 
 ## 🚧 Update
 
