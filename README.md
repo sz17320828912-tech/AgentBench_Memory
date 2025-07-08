@@ -8,7 +8,7 @@ This project benchmarks agents with memory capabilities. Follow the steps below 
 
 - [x] (July 7th, 2025) We released the code for reproducing the main experiment. 
 
-**🌟 More details coming soon! 🌟**
+**🌟 More details (such as datasets collection) coming soon! 🌟**
 
 
 ## 🚀 Quick Setup
