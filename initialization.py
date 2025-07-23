@@ -102,11 +102,11 @@ def load_existing_results(output_file_path, dataset_config, all_query_answer_pai
         
         # Extract existing identifiers
         existing_query_id = saved_data_entry.get('query_id')
-        existing_uuid = saved_data_entry.get('uuid')
+        existing_qa_pair_id = saved_data_entry.get('qa_pair_id')
         
         metrics, results = metrics_summarization(
             reconstructed_output, query, answer, dataset_config, 
-            metrics, results, existing_query_id, existing_uuid
+            metrics, results, existing_query_id, existing_qa_pair_id
         )
     
     # Calculate the last completed context ID

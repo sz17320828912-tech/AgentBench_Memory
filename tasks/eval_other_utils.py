@@ -617,7 +617,7 @@ def default_post_process(output, answer):
 # METRICS SUMMARIZATION
 # ============================================================================
 
-def metrics_summarization(output, query, answer, dataset_config, metrics, results, query_id=None, uuid=None):
+def metrics_summarization(output, query, answer, dataset_config, metrics, results, query_id=None, qa_pair_id=None):
     """
     Summarize metrics for a single query and update overall metrics and results.
     
@@ -629,7 +629,7 @@ def metrics_summarization(output, query, answer, dataset_config, metrics, result
         metrics: Running metrics dictionary
         results: List of result records
         query_id: Optional query identifier
-        uuid: Optional UUID for the question
+        qa_pair_id: Optional qa_pair_id for the question
         
     Returns:
         Tuple of (updated_metrics, updated_results)
@@ -656,8 +656,8 @@ def metrics_summarization(output, query, answer, dataset_config, metrics, result
     result_record = {**output, "answer": answer, 'query': query}
     if query_id is not None:
         result_record["query_id"] = query_id
-    if uuid is not None:
-        result_record["uuid"] = uuid
+    if qa_pair_id is not None:
+        result_record["qa_pair_id"] = qa_pair_id
     results.append(result_record)
 
     # Log debug information if enabled

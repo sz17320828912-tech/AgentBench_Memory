@@ -60,7 +60,7 @@ def _load_and_filter_dataset(dataset_name, split_name, source_filter, max_sample
     """Load dataset from HuggingFace and apply filtering and sampling."""
     try:
         # Load the specific split from HuggingFace
-        raw_data = load_dataset(dataset_name, split=split_name)
+        raw_data = load_dataset(dataset_name, split=split_name, revision="main")
         print(f"Loaded {len(raw_data)} samples from {split_name}")
         
         # Filter by source to match the sub_dataset exactly (source is now in metadata)
@@ -110,7 +110,7 @@ def _process_single_sample_qa_lists(sample):
     metadata = sample.get("metadata", {})
     
     # Define metadata fields to process
-    metadata_fields = ["question_dates", "question_types", "question_ids", "previous_events", "uuids", "demo"]
+    metadata_fields = ["question_dates", "question_types", "question_ids", "previous_events", "qa_pair_ids", "demo"]
     
     # Create processed sample with standardized list fields
     processed_sample = dict(sample)

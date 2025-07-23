@@ -145,7 +145,7 @@ class ConversationCreator:
             question_data: Dictionary containing questions, answers, and metadata
             
         Returns:
-            list: List of (query, answer, uuid) tuples
+            list: List of (query, answer, qa_pair_id) tuples
         """
         # Extract questions and answers, ensuring they are lists
         questions = self._ensure_list(question_data.get('questions', []))
@@ -175,7 +175,7 @@ class ConversationCreator:
             question_index: Index of this question in the list
             
         Returns:
-            tuple: (formatted_query, answer, uuid)
+            tuple: (formatted_query, answer, qa_pair_id)
         """
         # Create question-specific metadata
         qa_metadata = self._create_qa_metadata(question_data, question, answer, question_index)
@@ -184,10 +184,10 @@ class ConversationCreator:
         query_template = get_template(self.sub_dataset, 'query', self.agent_name)
         formatted_query = query_template.format(**qa_metadata)
         
-        # Get UUID for this question if available
-        uuid = qa_metadata.get('uuids')
+        # Get qa_pair_id for this question if available
+        qa_pair_id = qa_metadata.get('qa_pair_ids')
         
-        return formatted_query, answer, uuid
+        return formatted_query, answer, qa_pair_id
 
     def _ensure_list(self, value):
         """
@@ -221,7 +221,7 @@ class ConversationCreator:
         qa_metadata.update({'question': question, 'answer': answer})
         
         # Process indexed fields
-        indexed_fields = ['question_dates', 'question_types', 'question_ids', 'previous_events', 'uuids']
+        indexed_fields = ['question_dates', 'question_types', 'question_ids', 'previous_events', 'qa_pair_ids']
         
         for field_name in indexed_fields:
             field_value = self._get_field_value(question_data, field_name, question_index)
@@ -294,7 +294,7 @@ class ConversationCreator:
         Get the processed query-answer pairs for all contexts.
         
         Returns:
-            list: List of lists, where each inner list contains (query, answer, uuid) tuples for one context
+            list: List of lists, where each inner list contains (query, answer, qa_pair_id) tuples for one context
         """
         # Validate the output structure
         self._validate_qa_structure(self.query_and_answers)
@@ -313,6 +313,6 @@ class ConversationCreator:
         assert isinstance(query_and_answers, list), "Query-answers should be a list"
         assert len(query_and_answers) > 0, "Query-answers should not be empty"
         assert isinstance(query_and_answers[0], list), "Each context should have a list of QA pairs"
-        # Each QA pair should be a tuple of (query, answer, uuid)
+        # Each QA pair should be a tuple of (query, answer, qa_pair_id)
         if len(query_and_answers[0]) > 0:
-            assert len(query_and_answers[0][0]) == 3, "Each QA pair should be a tuple of (query, answer, uuid)"
+            assert len(query_and_answers[0][0]) == 3, "Each QA pair should be a tuple of (query, answer, qa_pair_id)"

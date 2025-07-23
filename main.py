@@ -92,13 +92,13 @@ def save_results_to_file(output_path, agent_config, dataset_config, results, met
 
 
 def process_single_query(agent, query, answer, dataset_config, metrics, results, 
-                        query_index, context_index, uuid=None):
+                        query_index, context_index, qa_pair_id=None):
     """Process a single query and update metrics and results."""
     # Send query to agent and get response
     agent_output = agent.send_message(query, memorizing=False, query_id=query_index, context_id=context_index)
     
     # Calculate metrics and update results
-    return metrics_summarization(agent_output, query, answer, dataset_config, metrics, results, query_index, uuid)
+    return metrics_summarization(agent_output, query, answer, dataset_config, metrics, results, query_index, qa_pair_id)
 
 
 def unpack_query_data(query_data):
@@ -113,7 +113,7 @@ def process_queries_for_context(agent, query_answer_pairs, dataset_config, metri
     print(f"\n!!!!!Processing {len(query_answer_pairs)} queries for context {context_index}!!!!!\n")
     
     for query_data in tqdm(query_answer_pairs, total=len(query_answer_pairs)):
-        query, answer, uuid = unpack_query_data(query_data)
+        query, answer, qa_pair_id = unpack_query_data(query_data)
         
         # Skip queries that have already been processed
         if should_skip_query(query_index, last_processed_query_id):
@@ -127,7 +127,7 @@ def process_queries_for_context(agent, query_answer_pairs, dataset_config, metri
         
         # Process the current query
         metrics, results = process_single_query(
-            agent, query, answer, dataset_config, metrics, results, query_index, context_index, uuid
+            agent, query, answer, dataset_config, metrics, results, query_index, context_index, qa_pair_id
         )
         query_index += 1
         
