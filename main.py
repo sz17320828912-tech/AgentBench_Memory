@@ -66,7 +66,7 @@ def save_results_to_file(output_path, agent_config, dataset_config, results, met
     """Save current results to the output file."""
     # Calculate averaged metrics for logging
     averaged_metrics = {
-        key: np.mean(values) * (100 if "_len" not in key else 1) 
+        key: np.mean(values) * (1 if ("_len" in key) or ("_time" in key) else 100) 
         for key, values in metrics.items()
     }
     
