@@ -112,6 +112,7 @@ class PassageManager:
 
         try:
             # breakup string into passages
+            # import ipdb; ipdb.set_trace()
             for text in parse_and_chunk_text(text, embedding_chunk_size):
 
                 if agent_state.embedding_config.embedding_endpoint_type != "openai":

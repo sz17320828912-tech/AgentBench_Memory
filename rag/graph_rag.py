@@ -15,6 +15,7 @@ import os
 import sys
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from typing import List, Tuple, Dict
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
@@ -41,6 +42,9 @@ load_dotenv()
 
 # Set the OpenAI API key environment variable
 os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
+# Set the Google API key environment variable for Gemini models
+if os.getenv('GOOGLE_API_KEY'):
+    os.environ["GOOGLE_API_KEY"] = os.getenv('GOOGLE_API_KEY')
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 nltk.download('punkt', quiet=True)
@@ -788,7 +792,10 @@ class GraphRAG:
 
         Args:
         - temperature (float): The temperature value for the large language model (default is 0.7).
-        - model_name (str): The name of the large language model to use (default is "gpt-4o-mini").
+        - model_name (str): The name of the large language model to use. 
+                           OpenAI models: "gpt-4o-mini", "gpt-4", "gpt-3.5-turbo", etc.
+                           Gemini models: "gemini-pro", "gemini-2.0-flash", "gemini-1.5-pro", etc.
+        - retrieve_num (int): Number of documents to retrieve (default is 5).
         - max_tokens (int): The maximum number of tokens for the large language model (default is 100).
 
         Attributes:
@@ -800,13 +807,74 @@ class GraphRAG:
         - visualizer: An instance of the Visualizer class for visualizing the knowledge graph traversal.
         """
         self.retrieve_num = retrieve_num
-        self.llm = ChatOpenAI(temperature=temperature, model_name=model_name, max_tokens=max_tokens)  #, max_tokens=max_tokens
+        
+        # Auto-detect provider based on model name
+        if self._is_gemini_model(model_name):
+            self.llm = ChatGoogleGenerativeAI(
+                temperature=temperature, 
+                model=model_name, 
+                max_tokens=max_tokens
+            )
+        elif self._is_openai_model(model_name):
+            self.llm = ChatOpenAI(
+                temperature=temperature, 
+                model_name=model_name, 
+                max_tokens=max_tokens
+            )
+        else:
+            # Default to OpenAI for unknown models
+            print(f"Warning: Unknown model '{model_name}'. Defaulting to OpenAI provider.")
+            self.llm = ChatOpenAI(
+                temperature=temperature, 
+                model_name=model_name, 
+                max_tokens=max_tokens
+            )
+        
         self.embedding_model = OpenAIEmbeddings()
         self.document_processor = DocumentProcessor()
         self.knowledge_graph = KnowledgeGraph()
         self.query_engine = None
         self.visualizer = Visualizer()
         #self.process_documents(documents)
+
+    def _is_gemini_model(self, model_name: str) -> bool:
+        """
+        Check if the model name corresponds to a Gemini model.
+        
+        Args:
+        - model_name (str): The model name to check.
+        
+        Returns:
+        - bool: True if it's a Gemini model, False otherwise.
+        """
+        gemini_patterns = [
+            'gemini',
+            'models/gemini'  # Full model path format
+        ]
+        model_name_lower = model_name.lower()
+        return any(pattern in model_name_lower for pattern in gemini_patterns)
+    
+    def _is_openai_model(self, model_name: str) -> bool:
+        """
+        Check if the model name corresponds to an OpenAI model.
+        
+        Args:
+        - model_name (str): The model name to check.
+        
+        Returns:
+        - bool: True if it's an OpenAI model, False otherwise.
+        """
+        openai_patterns = [
+            'gpt',
+            'text-davinci',
+            'text-curie',
+            'text-babbage',
+            'text-ada',
+            'o1',  # OpenAI o1 models
+            'claude'  # In case someone uses this with Claude through OpenAI-compatible APIs
+        ]
+        model_name_lower = model_name.lower()
+        return any(pattern in model_name_lower for pattern in openai_patterns)
 
     def process_documents(self, documents):
         """
@@ -840,8 +908,6 @@ class GraphRAG:
             print("No traversal path to visualize.")
 
         return final_answer, expanded_context
-
-
 
 
 if __name__ == '__main__':

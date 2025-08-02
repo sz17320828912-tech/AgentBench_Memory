@@ -125,7 +125,7 @@ class AgentWrapper:
                 embedding_endpoint_type="openai",
                 embedding_endpoint="https://api.openai.com/v1",
                 embedding_dim=1536,
-                embedding_chunk_size=self.chunk_size,
+                embedding_chunk_size=self.chunk_size * 2,
             ))
         else:
             self.client.set_default_embedding_config(
@@ -356,7 +356,7 @@ class AgentWrapper:
                 print(f"\n\nAgent {self.agent_name} not found in {self.agent_save_to_folder}\n\n")
         
         # Process based on Letta mode
-        response = self._process_letta_message(formatted_message, memorizing)
+        response = self._process_letta_message(formatted_message, memorizing, query_id, context_id)
         
         if memorizing:
             return "Memorized"
@@ -374,7 +374,7 @@ class AgentWrapper:
         self.agent_start_time = time.time()  # Reset time
         return output
     
-    def _process_letta_message(self, formatted_message, memorizing):
+    def _process_letta_message(self, formatted_message, memorizing, query_id, context_id):
         """Process message with Letta client based on mode."""
         try:
             if self.letta_mode == 'insert':
@@ -385,12 +385,14 @@ class AgentWrapper:
                         text=formatted_message,
                         actor=self.client.user,
                     )
+                    # import ipdb; ipdb.set_trace()
                     return "Memorized"
                 else:
                     response = self.client.send_message(
                         agent_id=self.agent_state.id,
                         message=formatted_message,
                         role='user')
+                    ## save response.messages to a file / for debugging as JSON     
                     return json.loads(response.messages[-3].tool_call.arguments)['message']
             
             elif self.letta_mode == 'chat':
@@ -402,6 +404,7 @@ class AgentWrapper:
                 if memorizing:
                     return "Memorized"
                 else:
+                    ## save response.messages to a file / for debugging as JSON    
                     return json.loads(response.messages[-3].tool_call.arguments)['message']
         except Exception as e:
             return f"{e}"

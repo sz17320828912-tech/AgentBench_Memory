@@ -529,9 +529,9 @@ class Agent(BaseAgent):
                         **{f"function_args.{k}": v for k, v in function_args.items()},
                     },
                 )
-
+                # import ipdb; ipdb.set_trace()
                 function_response, sandbox_run_result = self.execute_tool_and_persist_state(function_name, function_args, target_letta_tool)
-
+                # import ipdb; ipdb.set_trace()
                 log_event(
                     "tool_call_ended",
                     attributes={
@@ -845,6 +845,7 @@ class Agent(BaseAgent):
                 last_function_failed=last_function_failed,
                 put_inner_thoughts_first=put_inner_thoughts_first,
             )
+            # import ipdb; ipdb.set_trace()
             if not response:
                 # EDGE CASE: Function call failed AND there's no tools left for agent to call -> return early
                 return AgentStepResponse(

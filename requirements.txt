@@ -52,6 +52,7 @@ langchain-experimental
 langchain-groq
 langchain-openai
 langchain-text-splitters
+langchain_google_genai
 
 # AI/LLM APIs
 openai
