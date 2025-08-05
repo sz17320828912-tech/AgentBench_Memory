@@ -2,7 +2,7 @@ data
 agents
 __pycache__
 external_repos
-processed_data
+process_data
 local_data
 outputs
 outputs_4o

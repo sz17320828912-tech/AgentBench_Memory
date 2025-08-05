@@ -9,7 +9,7 @@ root=$(pwd)
 
 file_name=long_context_agents.txt
 
-for line in {5..19..1}
+for line in {5..18..1}
     do 
         cfg=$(sed -n "$line"p ${root}/bash_files/configs/${file_name})
         agent_config=$(echo $cfg | cut -f 1 -d ' ')

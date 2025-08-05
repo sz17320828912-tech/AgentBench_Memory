@@ -42,9 +42,9 @@ BASE_TEMPLATES = {
             'agentic_memory_agent': 'Here is the context retrieved from memory: \n{memory}\n'
         },
         'query': {
-            'long_context_agent': "Based on the context you memorized, answer the question as concisely as you can, using a single phrase if possible.\n\n{demo} Now Answer the Question: {question} \n\n Answer:",
-            'rag_agent': "Based on the context you memorized, answer the question as concisely as you can, using a single phrase if possible.\n\n{demo} Now Answer the Question: {question} \n\n Answer:",
-            'agentic_memory_agent': "Search Archival Memory, answer the question as concisely as you can, using a single phrase if possible.\n\n{demo} Now Answer the Question: {question} \n\n Answer:"
+            'long_context_agent': "Based on the context you memorized, answer the question as concisely as you can, using a single phrase if possible.\n\n {question} \n\n Answer:",  
+            'rag_agent': "Based on the context you memorized, answer the question as concisely as you can, using a single phrase if possible.\n\n {question} \n\n Answer:",
+            'agentic_memory_agent': "Search Archival Memory, answer the question as concisely as you can, using a single phrase if possible.\n\n {question} \n\n Answer:"
         }
     },
     
@@ -57,9 +57,9 @@ BASE_TEMPLATES = {
             'agentic_memory_agent': 'Here are retrieved several history chats between you and a user from memory: \n{memory}\n'
         },
         'query': {
-            'long_context_agent': "The history chats are between you and a user. Based on the relevant chat history, answer the question as concisely as you can, using a single phrase if possible.\n\n Current Date: {question_dates},\n\n Now Answer the Question: {question} \n\n Answer:",
-            'rag_agent': "The history chats are between you and a user. Based on the relevant chat history, answer the question as concisely as you can, using a single phrase if possible.\n\n Current Date: {question_dates},\n\n Now Answer the Question: {question} \n\n Answer:",
-            'agentic_memory_agent': "Search Archival Memory and answer the question as concisely as you can, using a single phrase if possible.\n\n Current Date: {question_dates},\n\n Now Answer the Question: {question} \n\n Answer:"
+            'long_context_agent': "The history chats are between you and a user. Based on the relevant chat history, answer the question as concisely as you can, using a single phrase if possible.\n\n {question} \n\n Answer:", 
+            'rag_agent': "The history chats are between you and a user. Based on the relevant chat history, answer the question as concisely as you can, using a single phrase if possible.\n\n {question} \n\n Answer:",
+            'agentic_memory_agent': "Search Archival Memory and answer the question as concisely as you can, using a single phrase if possible.\n\n {question} \n\n Answer:"
         }
     },
     
@@ -72,9 +72,9 @@ BASE_TEMPLATES = {
             'agentic_memory_agent': 'Here is the context retrieved from memory: \n{memory}\n'
         },
         'query': {
-            'long_context_agent': "Based on the context you memorized, complete the task below:\n\nThese are the events that have already occurred:\n\n{previous_events}\n\nBelow is a list of possible subsequent events:\n\n{question}\n\nYour task is to choose from the above events which event happens next based on the book excerpt. In your response to me, only include the answer without anything else. \n\n The event that happens next is:",
-            'rag_agent': "Based on the context you memorized, complete the task below:\n\nThese are the events that have already occurred:\n\n{previous_events}\n\nBelow is a list of possible subsequent events:\n\n{question}\n\nYour task is to choose from the above events which event happens next based on the book excerpt. In your response to me, only include the answer without anything else. \n\n The event that happens next is:",
-            'agentic_memory_agent': "Search Archival Memory, complete the task below:\n\nThese are the events that have already occurred:\n\n{previous_events}\n\nBelow is a list of possible subsequent events:\n\n{question}\n\nYour task is to choose from the above events which event happens next based on the book excerpt. In your response to me, only include the answer without anything else. \n\n The event that happens next is:"
+            'long_context_agent': "Based on the context you memorized, complete the task below:\n\nThese are the events that have already occurred:\n\n{question}\n\nYour task is to choose from the above events which event happens next based on the book excerpt. In your response to me, only include the answer without anything else. \n\n The event that happens next is:", 
+            'rag_agent': "Based on the context you memorized, complete the task below:\n\nThese are the events that have already occurred:\n\n{question}\n\nYour task is to choose from the above events which event happens next based on the book excerpt. In your response to me, only include the answer without anything else. \n\n The event that happens next is:",
+            'agentic_memory_agent': "Search Archival Memory, complete the task below:\n\nThese are the events that have already occurred:\n\n{question}\n\nYour task is to choose from the above events which event happens next based on the book excerpt. In your response to me, only include the answer without anything else. \n\n The event that happens next is:"
         }
     },
     
@@ -117,9 +117,9 @@ BASE_TEMPLATES = {
             'agentic_memory_agent': 'The book context is retrieved from memory and it is given as below: \n{memory}\n'
         },
         'query': {
-            'long_context_agent': "You are given a book above and you are tasked to summarize it. {question} Do not discuss the themes or background of the book. Do not provide any analysis or commentary.\n\n{demo}\n\nNow summarize the book.",
-            'rag_agent': "You are given a book above and you are tasked to summarize it. {question} Do not discuss the themes or background of the book. Do not provide any analysis or commentary.\n\n{demo}\n\nNow summarize the book.",
-            'agentic_memory_agent': "You are given a book above and you are tasked to summarize it. {question} Do not discuss the themes or background of the book. Do not provide any analysis or commentary.\n\n{demo}\n\nNow summarize the book."
+            'long_context_agent': "You are given a book above and you are tasked to summarize it. \n\n{question} \n\n Now summarize the book.", 
+            'rag_agent': "You are given a book above and you are tasked to summarize it. \n\n{question} \n\n Now summarize the book.",
+            'agentic_memory_agent': "You are given a book above and you are tasked to summarize it. \n\n{question} \n\n Now summarize the book."
         }
     },
     

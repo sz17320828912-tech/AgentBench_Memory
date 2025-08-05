@@ -4,7 +4,6 @@
 ###gpt4o-mini
 Long_context_agent_gpt-4o-mini.yaml                                      Accurate_Retrieval/Ruler/QA/Ruler_qa1_197k.yaml
 Long_context_agent_gpt-4o-mini.yaml                                      Accurate_Retrieval/Ruler/QA/Ruler_qa2_421k.yaml
-Long_context_agent_gpt-4o-mini.yaml                                      Accurate_Retrieval/Ruler/NIAH/Ruler_niah_mq_448k.yaml 
 Long_context_agent_gpt-4o-mini.yaml                                      Accurate_Retrieval/InfBench_QA/Infbench_qa.yaml
 Long_context_agent_gpt-4o-mini.yaml                                      Accurate_Retrieval/LongMemEval/Longmemeval_s_star.yaml
 Long_context_agent_gpt-4o-mini.yaml                                      Accurate_Retrieval/EventQA/Eventqa_full.yaml
@@ -21,7 +20,6 @@ Long_context_agent_gpt-4o-mini.yaml                                      Conflic
 ###gpt-4o
 Long_context_agent_gpt-4o.yaml                                           Accurate_Retrieval/Ruler/QA/Ruler_qa1_197k.yaml
 Long_context_agent_gpt-4o.yaml                                           Accurate_Retrieval/Ruler/QA/Ruler_qa2_421k.yaml
-Long_context_agent_gpt-4o.yaml                                           Accurate_Retrieval/Ruler/NIAH/Ruler_niah_mq_448k.yaml 
 Long_context_agent_gpt-4o.yaml                                           Accurate_Retrieval/InfBench_QA/Infbench_qa.yaml
 Long_context_agent_gpt-4o.yaml                                           Accurate_Retrieval/LongMemEval/Longmemeval_s_star.yaml
 Long_context_agent_gpt-4o.yaml                                           Accurate_Retrieval/EventQA/Eventqa_full.yaml
@@ -38,7 +36,6 @@ Long_context_agent_gpt-4o.yaml                                           Conflic
 ###gpt-4.1-mini
 Long_context_agent_gpt-4.1-mini.yaml                                     Accurate_Retrieval/Ruler/QA/Ruler_qa1_197k.yaml
 Long_context_agent_gpt-4.1-mini.yaml                                     Accurate_Retrieval/Ruler/QA/Ruler_qa2_421k.yaml
-Long_context_agent_gpt-4.1-mini.yaml                                     Accurate_Retrieval/Ruler/NIAH/Ruler_niah_mq_448k.yaml 
 Long_context_agent_gpt-4.1-mini.yaml                                     Accurate_Retrieval/InfBench_QA/Infbench_qa.yaml
 Long_context_agent_gpt-4.1-mini.yaml                                     Accurate_Retrieval/LongMemEval/Longmemeval_s_star.yaml
 Long_context_agent_gpt-4.1-mini.yaml                                     Accurate_Retrieval/EventQA/Eventqa_full.yaml
@@ -55,7 +52,6 @@ Long_context_agent_gpt-4.1-mini.yaml                                     Conflic
 ###gemini-2.0-flash
 Long_context_agent_gemini-2.0-flash.yaml                                Accurate_Retrieval/Ruler/QA/Ruler_qa1_197k.yaml
 Long_context_agent_gemini-2.0-flash.yaml                                Accurate_Retrieval/Ruler/QA/Ruler_qa2_421k.yaml
-Long_context_agent_gemini-2.0-flash.yaml                                Accurate_Retrieval/Ruler/NIAH/Ruler_niah_mq_448k.yaml 
 Long_context_agent_gemini-2.0-flash.yaml                                Accurate_Retrieval/InfBench_QA/Infbench_qa.yaml
 Long_context_agent_gemini-2.0-flash.yaml                                Accurate_Retrieval/LongMemEval/Longmemeval_s_star.yaml
 Long_context_agent_gemini-2.0-flash.yaml                                Accurate_Retrieval/EventQA/Eventqa_full.yaml
@@ -73,7 +69,6 @@ Long_context_agent_gemini-2.0-flash.yaml                                Conflict
 ###claude-3-7-sonnet-20250219
 Long_context_agent_claude-3-7-sonnet-20250219.yaml                      Accurate_Retrieval/Ruler/QA/Ruler_qa1_197k.yaml
 Long_context_agent_claude-3-7-sonnet-20250219.yaml                      Accurate_Retrieval/Ruler/QA/Ruler_qa2_421k.yaml
-Long_context_agent_claude-3-7-sonnet-20250219.yaml                      Accurate_Retrieval/Ruler/NIAH/Ruler_niah_mq_448k.yaml 
 Long_context_agent_claude-3-7-sonnet-20250219.yaml                      Accurate_Retrieval/InfBench_QA/Infbench_qa.yaml
 Long_context_agent_claude-3-7-sonnet-20250219.yaml                      Accurate_Retrieval/LongMemEval/Longmemeval_s_star.yaml
 Long_context_agent_claude-3-7-sonnet-20250219.yaml                      Accurate_Retrieval/EventQA/Eventqa_full.yaml
@@ -93,7 +88,6 @@ Long_context_agent_o4-mini.yaml                                         Conflict
 Long_context_agent_o4-mini.yaml                                         Conflict_Resolution/Factconsolidation_mh_32k.yaml
 Long_context_agent_o4-mini.yaml                                         Conflict_Resolution/Factconsolidation_sh_32k.yaml
 
-Long_context_agent_gpt-4o-mini.yaml                                     Ruler_niah_mq_448k.yaml
 Long_context_agent_gpt-4o-mini.yaml                                     Ruler_qa2_421k.yaml
 Long_context_agent_gpt-4.1-mini.yaml                                    Ruler_qa2_421k.yaml
 Long_context_agent_gpt-4o.yaml                                          Ruler_qa2_421k.yaml
