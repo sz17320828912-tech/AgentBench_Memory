@@ -72,9 +72,9 @@ BASE_TEMPLATES = {
             'agentic_memory_agent': 'Here is the context retrieved from memory: \n{memory}\n'
         },
         'query': {
-            'long_context_agent': "Based on the context you memorized, complete the task below:\n\nThese are the events that have already occurred:\n\n{question}\n\nYour task is to choose from the above events which event happens next based on the book excerpt. In your response to me, only include the answer without anything else. \n\n The event that happens next is:", 
-            'rag_agent': "Based on the context you memorized, complete the task below:\n\nThese are the events that have already occurred:\n\n{question}\n\nYour task is to choose from the above events which event happens next based on the book excerpt. In your response to me, only include the answer without anything else. \n\n The event that happens next is:",
-            'agentic_memory_agent': "Search Archival Memory, complete the task below:\n\nThese are the events that have already occurred:\n\n{question}\n\nYour task is to choose from the above events which event happens next based on the book excerpt. In your response to me, only include the answer without anything else. \n\n The event that happens next is:"
+            'long_context_agent': "Based on the context you memorized, complete the task below:\n\n{question}\n\n The event that happens next is:", 
+            'rag_agent': "Based on the context you memorized, complete the task below:\n\n{question}\n\n The event that happens next is:",
+            'agentic_memory_agent': "Search Archival Memory, complete the task below:\n\n{question}\n\n The event that happens next is:"
         }
     },
     

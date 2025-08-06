@@ -26,6 +26,8 @@ We collected and reformulated data from previous benchmarks and datasets. All da
 Notably, the team adopted a "inject once, query multiple times" design philosophy—one long text corresponds to multiple questions, significantly improving evaluation efficiency.
 
 ## 🚧 Update
+- [x] (Aug. 5th, 2025)  
+    We optimized the ```template.py``` for better usage.
 
 - [x] (July 22th, 2025)  
     We updated the ```Readme.md``` and release the code for ```longmemeval``` and ```infbench_sum```. They are needed to evaluate by using ```gpt-4o``` as a judge. 
