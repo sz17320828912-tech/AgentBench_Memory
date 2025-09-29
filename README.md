@@ -26,6 +26,9 @@ We collected and reformulated data from previous benchmarks and datasets. All da
 Notably, the team adopted a "inject once, query multiple times" design philosophy—one long text corresponds to multiple questions, significantly improving evaluation efficiency.
 
 ## 🚧 Update
+- [x] (Sep. 28th, 2025)  
+    We publish a new version of our paper. 
+
 - [x] (Aug. 5th, 2025)  
     We optimized the ```template.py``` for better usage.
 
@@ -40,9 +43,9 @@ Notably, the team adopted a "inject once, query multiple times" design philosoph
     We released the code for reproducing the main experiment. 
 
 
-- TODO List ✍️ in next month.
+- TODO List ✍️ .
     
-    [] New Dataset in Long Range Understanding (LRU). 
+    ~~[x] New Dataset in Long Range Understanding (LRU). ~~
 
     [] Leaderboard website for our benchmark.
 
