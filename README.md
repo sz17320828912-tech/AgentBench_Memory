@@ -45,7 +45,7 @@ Notably, the team adopted a "inject once, query multiple times" design philosoph
 
 - TODO List ✍️ .
     
-    ~~[x] New Dataset in Long Range Understanding (LRU). ~~
+    <del>[x] New Dataset in Long Range Understanding (LRU). </del>
 
     [] Leaderboard website for our benchmark.
 
