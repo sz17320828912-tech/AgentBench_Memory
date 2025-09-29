@@ -17,7 +17,7 @@ from tqdm import tqdm
 from collections import defaultdict
 import logging
 import numpy as np
-from tasks.eval_other_utils import metrics_summarization
+from utils.eval_other_utils import metrics_summarization
 
 # Configure logging
 logging.basicConfig(

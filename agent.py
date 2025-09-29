@@ -3,8 +3,8 @@ import json
 import torch
 import tiktoken
 from openai import OpenAI
-from tasks.templates import get_template
-from tasks.eval_data_utils import (
+from utils.templates import get_template
+from utils.eval_data_utils import (
     format_chat,
 )
 import re
@@ -38,6 +38,7 @@ class AgentWrapper:
         self.agent_name = agent_config['agent_name']
         self.sub_dataset = dataset_config['sub_dataset']
         self.context_max_length = dataset_config['context_max_length']
+        self.dataset = dataset_config['dataset']
         
         # Output and storage configuration
         self.output_dir = agent_config['output_dir']
@@ -66,11 +67,13 @@ class AgentWrapper:
         if 'Long_context_agent' in self.agent_name:
             self._initialize_long_context_agent()
         elif self._is_agent_type("letta"):
-            self._initialize_letta_agent(agent_config)
+            self._initialize_letta_agent(agent_config, dataset_config)
         elif self._is_agent_type("mem0"):
             self._initialize_mem0_agent(agent_config, dataset_config)
         elif self._is_agent_type("cognee"):
             self._initialize_cognee_agent(agent_config, dataset_config)
+        elif self._is_agent_type("zep"):
+            self._initialize_zep_agent(agent_config)
         elif self._is_agent_type("rag"):
             self._initialize_rag_agent(agent_config, dataset_config)
         else:
@@ -79,6 +82,30 @@ class AgentWrapper:
     def _is_agent_type(self, agent_type):
         """Check if the current agent is of a specific type."""
         return agent_type in self.agent_name
+
+    def _create_oai_client(self):
+        """Create an OpenAI-compatible client. Uses Azure OpenAI if env vars are set.
+
+        Environment variables for Azure:
+          - AZURE_OPENAI_ENDPOINT
+          - AZURE_OPENAI_API_VERSION (optional; default provided by SDK or pinned elsewhere)
+          - AZURE_OPENAI_API_KEY
+
+        When using Azure, ensure self.model is the deployment name.
+        """
+        try:
+            azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
+            if azure_endpoint:
+                # Lazy import to avoid requiring Azure class when not used
+                from openai import AzureOpenAI
+                return AzureOpenAI(
+                    api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
+                    api_version=os.environ.get("AZURE_OPENAI_API_VERSION"),
+                    azure_endpoint=azure_endpoint,
+                )
+        except Exception:
+            pass
+        return OpenAI()
 
     def _create_standard_response(self, output, input_tokens, output_tokens, memory_time, query_time):
         """Create standardized response dictionary."""
@@ -95,7 +122,7 @@ class AgentWrapper:
         self.context = ''
         
         if "gpt" in self.model or "o4" in self.model:
-            self.client = OpenAI()
+            self.client = self._create_oai_client()
         elif "claude" in self.model:
             import anthropic
             self.client = anthropic.Anthropic(
@@ -107,64 +134,93 @@ class AgentWrapper:
         else:
             raise NotImplementedError(f"Model not supported for long context agent: {self.model}")
 
-    def _initialize_letta_agent(self, agent_config):
+    def _initialize_letta_agent(self, agent_config, dataset_config):
         """Initialize Letta agent with proper configuration."""
-        from letta import create_client, LLMConfig, EmbeddingConfig, BasicBlockMemory
+        if "api" not in agent_config['agent_name']:
+            from letta import create_client, LLMConfig, EmbeddingConfig, BasicBlockMemory
 
-        self.chunk_size = agent_config['agent_chunk_size']
-        self.letta_mode = agent_config['letta_mode']
-        
-        self.client = create_client()
-        self.client.set_default_llm_config(LLMConfig.default_config(agent_config['model'])) 
-        self.agent_start_time = time.time()
-        
-        # Configure embedding
-        if agent_config['text_embedding'] == 'text-embedding-3-small':
-            self.client.set_default_embedding_config(EmbeddingConfig(
-                embedding_model="text-embedding-3-small",
-                embedding_endpoint_type="openai",
-                embedding_endpoint="https://api.openai.com/v1",
-                embedding_dim=1536,
-                embedding_chunk_size=self.chunk_size * 2,
-            ))
+            self.chunk_size = agent_config['agent_chunk_size']
+            self.letta_mode = agent_config['letta_mode']
+            
+            self.client = create_client()
+            self.client.set_default_llm_config(LLMConfig.default_config(agent_config['model']))             
+            self.agent_start_time = time.time()
+            
+            # Configure embedding
+            if agent_config['text_embedding'] == 'text-embedding-3-small':
+                self.client.set_default_embedding_config(EmbeddingConfig(
+                    embedding_model="text-embedding-3-small",
+                    embedding_endpoint_type="openai",
+                    embedding_endpoint="https://api.openai.com/v1",
+                    embedding_dim=1536,
+                    embedding_chunk_size=self.chunk_size * 2,
+                ))
+            else:
+                self.client.set_default_embedding_config(
+                    EmbeddingConfig.default_config(agent_config['text_embedding'])
+                )
+
+            # Load system prompt
+            system_path = agent_config['system_path']
+            with open(system_path, 'r') as f:
+                self.system = f.read()
+
+            # Load or create agent
+            if os.path.exists(self.agent_save_to_folder):
+                self.load_agent()
+            else:
+                human_block = self.client.create_block(
+                    label='human', 
+                    value='User is sharing the contents they are reading recently.', 
+                    limit=2000000
+                )
+                persona_block = self.client.create_block(
+                    label='persona', 
+                    value='You are a helpful assistant that can help memorize details in the conversation.', 
+                    limit=2000000
+                )
+                memory = BasicBlockMemory(blocks=[human_block, persona_block])
+                self.agent_state = self.client.create_agent(
+                    name='mm_agent',
+                    memory=memory,
+                    system=self.system
+                )
+        ## use the letta api to create the agent
         else:
-            self.client.set_default_embedding_config(
-                EmbeddingConfig.default_config(agent_config['text_embedding'])
-            )
+            from letta_client import Letta, CreateBlock
+            
+            self.chunk_size = agent_config['agent_chunk_size']
+            self.letta_mode = agent_config['letta_mode']
+            self.agent_start_time = time.time()
+            
+            
+            self.client = Letta(token=os.environ.get('Letta_API_KEY'))
+            self.agent_state = self.client.agents.create(
+            memory_blocks=[
+                CreateBlock(
+                    label="human",
+                    limit=2000000,
+                    value="User is sharing the contents they are reading recently."
+                ),
+                CreateBlock(
+                    label="persona",
+                    limit=2000000,
+                    value="You are a helpful assistant that can help memorize details in the conversation."
+                )
+            ],
+            model=f"openai/{agent_config['model']}",
+            embedding=f"openai/{agent_config['text_embedding']}"
+        )
 
-        # Load system prompt
-        system_path = agent_config['system_path']
-        with open(system_path, 'r') as f:
-            self.system = f.read()
-
-        # Load or create agent
-        if os.path.exists(self.agent_save_to_folder):
-            self.load_agent()
-        else:
-            human_block = self.client.create_block(
-                label='human', 
-                value='User is sharing the contents they are reading recently.', 
-                limit=2000
-            )
-            persona_block = self.client.create_block(
-                label='persona', 
-                value='You are a helpful assistant that can help memorize details in the conversation.', 
-                limit=2000
-            )
-            memory = BasicBlockMemory(blocks=[human_block, persona_block])
-            self.agent_state = self.client.create_agent(
-                name='mm_agent',
-                memory=memory,
-                system=self.system
-            )
-
+            
+            
     def _initialize_mem0_agent(self, agent_config, dataset_config):
         """Initialize Mem0 agent with retrieval configuration."""
         from mem0.memory.main import Memory
         
         self.retrieve_num = agent_config['retrieve_num']
         self.context = ''
-        self.client = OpenAI()
+        self.client = self._create_oai_client()
         self.memory = Memory()
         self.agent_start_time = time.time()
 
@@ -176,6 +232,19 @@ class AgentWrapper:
         self.chunk_size = agent_config['agent_chunk_size']
         self.agent_start_time = time.time()
         self.cognee_dir = './cognee/.cognee_system/databases/cognee.lancedb'
+    
+    def _initialize_zep_agent(self, agent_config):
+        # from zep_cloud.client import AsyncZep
+        # self.client = AsyncZep(api_key=os.getenv("ZEP_API_KEY"), base_url="https://api.development.getzep.com/api/v2")
+        from zep_cloud import Zep
+        from methods.zep import OpenAIAgent
+        self.retrieve_num = agent_config['retrieve_num']
+        self.chunk_size = agent_config['agent_chunk_size']
+        self.context_id = -1
+
+        self.client = Zep(api_key=os.getenv("ZEP_API_KEY"))
+        self.oai_client = OpenAIAgent(model=self.model, source="azure", api_dict={"endpoint":os.environ.get("AZURE_OPENAI_ENDPOINT"), "api_version":os.environ.get("AZURE_OPENAI_API_VERSION"), "api_key":os.environ.get("AZURE_OPENAI_API_KEY")}, temperature=self.temperature)
+        self.agent_start_time = time.time()
 
     def _initialize_rag_agent(self, agent_config, dataset_config):
         """Initialize RAG agent with retrieval configuration."""
@@ -202,7 +271,7 @@ class AgentWrapper:
         # Route to appropriate agent handler based on agent type
         if 'Long_context_agent' in self.agent_name:
             return self._handle_long_context_agent(message, memorizing)
-        elif any(self._is_agent_type(agent_type) for agent_type in ["letta", "cognee", "mem0"]):
+        elif any(self._is_agent_type(agent_type) for agent_type in ["letta", "cognee", "mem0", "zep"]):
             return self._handle_memory_agent(message, memorizing, query_id, context_id)
         elif self._is_agent_type("rag"):
             return self._handle_rag_agent(message, memorizing, query_id, context_id)
@@ -214,7 +283,7 @@ class AgentWrapper:
         if memorizing:
             # Add message to context memory
             memorize_template = get_template(self.sub_dataset, 'memorize', self.agent_name)
-            formatted_message = memorize_template.format(context=message)
+            formatted_message = memorize_template.format(context=message, **({'time_stamp': time.strftime("%Y-%m-%d %H:%M:%S")} if '{time_stamp}' in memorize_template else {}))
             self.context += "\n" + formatted_message
             self.context = self.context.strip()
             return "Memorized"
@@ -236,9 +305,7 @@ class AgentWrapper:
             self._truncate_context_if_needed(tokenizer)
                 
         # Format message with context and system prompt
-        retrieval_memory = get_template(self.sub_dataset, 'retrieval', self.agent_name)
-        retrieval_memory = retrieval_memory.format(memory=self.context)
-        full_message = retrieval_memory + "\n" + message
+        full_message = self.context + "\n" + message
         system_message = get_template(self.sub_dataset, 'system', self.agent_name)
         formatted_message = format_chat(message=full_message, system_message=system_message)
         
@@ -328,6 +395,7 @@ class AgentWrapper:
             0,
             time.time() - start_time
         )
+        
     def _handle_memory_agent(self, message, memorizing, query_id, context_id):
         """Handle message processing for memory-based agents (Letta, Cognee, Mem0)."""
         if self._is_agent_type("letta"):
@@ -336,14 +404,19 @@ class AgentWrapper:
             return self._handle_cognee_agent(message, memorizing, query_id, context_id)
         elif self._is_agent_type("mem0"):
             return self._handle_mem0_agent(message, memorizing, query_id, context_id)
+        elif self._is_agent_type("zep"):
+            return self._handle_zep_agent(message, memorizing, query_id, context_id)
         else:
             raise NotImplementedError(f"Memory agent type not supported: {self.agent_name}")
 
     def _handle_letta_agent(self, message, memorizing, query_id, context_id):
         """Handle message processing for Letta agents."""
         # Format message based on context
-        formatted_message = (get_template(self.sub_dataset, 'memorize', self.agent_name).format(context=message) 
-                           if memorizing else message)
+        if memorizing:
+            memorize_template = get_template(self.sub_dataset, 'memorize', self.agent_name)
+            formatted_message = memorize_template.format(context=message, **({'time_stamp': time.strftime("%Y-%m-%d %H:%M:%S")} if '{time_stamp}' in memorize_template else {}))
+        else:
+            formatted_message = message
         
         # Handle memory construction time for queries
         memory_construction_time = 0 if memorizing else time.time() - self.agent_start_time
@@ -376,6 +449,8 @@ class AgentWrapper:
     
     def _process_letta_message(self, formatted_message, memorizing, query_id, context_id):
         """Process message with Letta client based on mode."""
+        from letta_client import Letta, MessageCreate
+        
         try:
             if self.letta_mode == 'insert':
                 if memorizing:
@@ -406,8 +481,21 @@ class AgentWrapper:
                 else:
                     ## save response.messages to a file / for debugging as JSON    
                     return json.loads(response.messages[-3].tool_call.arguments)['message']
+            elif self.letta_mode == 'api':
+                response = self.client.agents.messages.create(
+                    agent_id=self.agent_state.id,
+                    messages=[
+                        MessageCreate(
+                            role="user",
+                            content=formatted_message,
+                        ),
+                    ],
+                )
+                print(f"\n\n\nresponse: {response}\n\n\n")
+                return response.messages[-1].content
         except Exception as e:
-            return f"{e}"
+            print(f"\n\n\nerror: {e}\n\n\n")
+            return "Error"
 
     def _handle_cognee_agent(self, message, memorizing, query_id, context_id):
         """Handle message processing for Cognee agents."""
@@ -417,7 +505,8 @@ class AgentWrapper:
         
         if memorizing:
             # Add context to Cognee knowledge base
-            formatted_message = get_template(self.sub_dataset, 'memorize', self.agent_name).format(context=message)
+            memorize_template = get_template(self.sub_dataset, 'memorize', self.agent_name)
+            formatted_message = memorize_template.format(context=message, **({'time_stamp': time.strftime("%Y-%m-%d %H:%M:%S")} if '{time_stamp}' in memorize_template else {}))
             
             # Add text to cognee and generate knowledge graph
             asyncio.run(cognee.add(formatted_message, dataset_name=dataset_name))
@@ -457,7 +546,8 @@ class AgentWrapper:
         user_id = f'context_{context_id}_{self.sub_dataset}'
         if memorizing:
             system_message = get_template(self.sub_dataset, 'system', self.agent_name)
-            formatted_message = get_template(self.sub_dataset, 'memorize', self.agent_name).format(context=message)
+            memorize_template = get_template(self.sub_dataset, 'memorize', self.agent_name)
+            formatted_message = memorize_template.format(context=message, **({'time_stamp': time.strftime("%Y-%m-%d %H:%M:%S")} if '{time_stamp}' in memorize_template else {}))
             
             # Generate Assistant response
             # memory_messages = [{"role": "system", "content": system_message}, {"role": "user", "content": formatted_message}]
@@ -489,11 +579,10 @@ class AgentWrapper:
             memories_str = "\n".join(f"- {entry['memory']}" for entry in relevant_memories["results"])
             
             # Generate assistant response
-            retrieval_message = get_template(self.sub_dataset, 'retrieval', self.agent_name).format(memory=memories_str)
-            system_prompt = f"You are a helpful AI. Answer the question based on query and memories.\n{retrieval_message}\n"
+            system_prompt = f"You are a helpful AI. Answer the question based on query and memories.\n{memories_str}\n"
             llm_messages = [
                 {"role": "system", "content": system_prompt}, 
-                {"role": "user", "content": message}
+                {"role": "user", "content": message + "\n\nCurrent Time: " + time.strftime("%Y-%m-%d %H:%M:%S")}
             ]
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -515,15 +604,100 @@ class AgentWrapper:
             )
             self.agent_start_time = time.time()  # Reset time
             return output
+    
+    # Zep
+    def _handle_zep_agent(self, message, memorizing, query_id, context_id):
+        """Handle Zep processing."""
+        import inspect
+        from zep_cloud import Message
+        from methods.zep import compose_search_context, llm_response, get_retrieval_query, construct_messages
+        
+        # user id / session id / oai client
+        user_id = f'user_{context_id}_{self.sub_dataset}'
+        graph_id = f'graph_{context_id}_{self.sub_dataset}'
+        thread_id = f'thread_{context_id}_{self.sub_dataset}'
+                
+        # check the context id for user and session creation
+        if self.context_id != context_id and memorizing:
+            # User creation
+            self.client.user.add(user_id=user_id)
+            
+            # Thread creation
+            self.client.thread.create(thread_id=thread_id, user_id=user_id)
+                    
+            # Graph creation
+            self.client.graph.create(graph_id=graph_id)
+            self.context_id = context_id
+        else:
+            pass
+            
+        if memorizing:
+            # graph add
+            memorize_template = get_template(self.sub_dataset, 'memorize', self.agent_name)
+            content = memorize_template.format(context=message, **({'time_stamp': time.strftime("%Y-%m-%d %H:%M:%S")} if '{time_stamp}' in memorize_template else {}))
+            self.client.graph.add(
+                graph_id=graph_id, 
+                type="text",
+                data=content[:9998]
+            )
 
+            # # thread add
+            messages = construct_messages(content, user_id)
+            self.client.thread.add_messages(thread_id=thread_id, messages=messages)
+            return "Memorized"
+        else:
+            memory_construction_time = time.time() - self.agent_start_time
+            
+            # graph search
+            retrieval_query = get_retrieval_query(message)
+            print(f"\n\n\nretrieval_query: {retrieval_query}\n\n\n")
+
+            edges_results = self.client.graph.search(graph_id=graph_id, query=retrieval_query[:399], scope='edges', limit=self.retrieve_num).edges
+            node_results = self.client.graph.search(graph_id=graph_id, query=retrieval_query[:399], scope='nodes', limit=self.retrieve_num).nodes
+            episode_results = self.client.graph.search(graph_id=graph_id, query=retrieval_query[:399], scope='episodes', limit=self.retrieve_num).episodes
+            
+            # print(f"\n\n\nepisode_results: {episode_results}\n\n\n")
+            # print(f"\n\n\nedges_results: {edges_results}\n\n\n")
+            # print(f"\n\n\nnode_results: {node_results}\n\n\n")
+                        
+            # thread search / currently we do not use the thread info
+            memory = self.client.thread.get_user_context(thread_id=thread_id)
+            context_block = memory.context
+
+            # Prompt an LLM with relevant context
+            retrieved_context = compose_search_context(edges_results, node_results, context_block, episode_results)
+            import asyncio
+            response = asyncio.run(llm_response(self.oai_client, retrieved_context, message))
+            query_time_len = time.time() - self.agent_start_time - memory_construction_time
+
+            output = self._create_standard_response(
+                response,
+                len(self.tokenizer.encode(retrieved_context, disallowed_special=())),
+                len(self.tokenizer.encode(response, disallowed_special=())),
+                memory_construction_time,
+                query_time_len
+            )
+            self.agent_start_time = time.time()  # Reset time
+            
+            # save the context
+            save_dir = f"./outputs/rag_retrieved/{self.agent_name}/k_{self.retrieve_num}/{self.sub_dataset}/chunksize_{self.chunk_size}/query_{query_id}_context_{context_id}.json"
+            os.makedirs(os.path.dirname(save_dir), exist_ok=True)
+            with open(save_dir, "w") as f:
+                paragraphs = [p for p in retrieved_context.replace("\r\n", "\n").split("\n") if p.strip()]
+                json.dump({"retrieved_context_paragraphs": paragraphs, "response": response}, f, ensure_ascii=False, indent=2)
+            
+            return output
+    
     def _handle_rag_agent(self, message, memorizing, query_id, context_id):
         """Handle message processing for RAG agents."""
         if memorizing:
             # Add message to chunks and context
-            self.context += "\n" + message
+            memorize_template = get_template(self.sub_dataset, 'memorize', self.agent_name)
+            formatted_message = memorize_template.format(context=message, **({'time_stamp': time.strftime("%Y-%m-%d %H:%M:%S")} if '{time_stamp}' in memorize_template else {}))
+            self.context += "\n" + formatted_message
             self.context = self.context.strip()
-            self.chunks.append(message)
-            self.context_len = self.context_len + self.chunk_size   
+            self.chunks.append(formatted_message)
+            self.context_len = self.context_len + self.chunk_size
             
             # Truncate context if it exceeds limits
             if self.context_len > self.input_length_limit:
@@ -555,9 +729,10 @@ class AgentWrapper:
             "rag_contriever": lambda: self._handle_embedding_rag(message, context_id, tokenizer),
             "rag_text_embedding_3_large": lambda: self._handle_embedding_rag(message, context_id, tokenizer),
             "rag_text_embedding_3_small": lambda: self._handle_embedding_rag(message, context_id, tokenizer),
+            "rag_qwen3_embedding_4b": lambda: self._handle_embedding_rag(message, context_id, tokenizer),
             "rag_raptor": lambda: self._handle_raptor_rag(message, context_id, tokenizer),
-            "rag_nv_embed_v2": lambda: self._handle_nv_embed_rag(message, query_id, context_id, tokenizer),
             "self_rag": lambda: self._handle_self_rag(message, context_id, tokenizer),
+            "memo_rag": lambda: self._handle_memorag(message, context_id, tokenizer),
         }
         
         # Find matching handler
@@ -587,7 +762,7 @@ class AgentWrapper:
         if self.context_id != context_id:
             docs = [Document(page_content=t, metadata={"source":"Not provided", "chunk":i}) for i,t in enumerate(self.chunks)]
             try:
-                from rag.graph_rag import GraphRAG
+                from methods.graph_rag import GraphRAG
                 self.graph_rag = GraphRAG(temperature=self.temperature, model_name=self.model, retrieve_num=self.retrieve_num, max_tokens=self.max_tokens)
                 self.graph_rag.process_documents(docs)
                 memory_construction_time = time.time() - start_time
@@ -630,7 +805,7 @@ class AgentWrapper:
         
         if self.context_id != context_id:
             docs = self.chunks
-            from rag.hipporag import HippoRAG
+            from methods.hipporag import HippoRAG
             if any(agent_name in self.agent_name for agent_name in ["hippo_rag_v2_nv"]):
                 save_dir = os.path.join(f"./outputs/rag_retrieved/NV-Embed-v2", self.sub_dataset, f'chunksize_{self.chunk_size}', f'context_id_{context_id}')
                 embedding_model_name = 'nvidia/NV-Embed-v2'
@@ -676,6 +851,7 @@ class AgentWrapper:
         
         # Extract retrieval query from message
         retrieval_query = self._extract_retrieval_query(message)
+        print(f"\n\n\n\nretrieval_query: {retrieval_query}\n\n\n\n")
         
         # Build vectorstore if context changed
         if self.context_id != context_id:
@@ -694,15 +870,14 @@ class AgentWrapper:
         
         # Answer the query
         retrieval_memory_string = "\n".join([f"Memory {i+1}:\n{text}" for i, text in enumerate(retrieval_context)])
-        templated_message = get_template(self.sub_dataset, 'retrieval', self.agent_name).format(memory=retrieval_memory_string)
         
         # Format the message
-        ask_llm_message = templated_message + "\n" + message
+        ask_llm_message = retrieval_memory_string + "\n" + message
         system_message = get_template(self.sub_dataset, 'system', self.agent_name)
         format_message = format_chat(message=ask_llm_message, system_message=system_message)
         
         # Generate response
-        response = OpenAI().chat.completions.create(
+        response = self._create_oai_client().chat.completions.create(
             model=self.model,
             messages=format_message,
             temperature=self.temperature,
@@ -737,7 +912,7 @@ class AgentWrapper:
         
     def _handle_embedding_rag(self, message, context_id, tokenizer):
         """Handle embedding-based RAG processing (Contriever, Text-embedding models)."""
-        from rag.embedding_retriever import TextRetriever, RAGSystem
+        from methods.embedding_retriever import TextRetriever, RAGSystem
         
         # Determine embedding model
         if any(agent_name in self.agent_name for agent_name in ["rag_contriever"]):
@@ -746,6 +921,8 @@ class AgentWrapper:
             embedding_model_name = "text-embedding-3-large"
         elif any(agent_name in self.agent_name for agent_name in ["rag_text_embedding_3_small"]):
             embedding_model_name = "text-embedding-3-small"
+        elif any(agent_name in self.agent_name for agent_name in ["rag_qwen3_embedding_4b"]):
+            embedding_model_name = "Qwen/Qwen3-Embedding-4B"
         else:
             raise NotImplementedError
         
@@ -758,14 +935,12 @@ class AgentWrapper:
             print(f"\n\nContext {context_id} already processed, skipping {embedding_model_name} build vectorstore...\n\n")
                             
         # Retrieve relevant passages and answer the query
-        rag_system = RAGSystem(self.retriever, self.model, self.temperature, self.max_tokens)
+        rag_system = RAGSystem(self.retriever, self.model, self.temperature, self.max_tokens, use_azure=True, azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"), azure_api_key=os.environ.get("AZURE_OPENAI_API_KEY"), azure_api_version=os.environ.get("AZURE_OPENAI_API_VERSION"))
         system_message = get_template(self.sub_dataset, 'system', self.agent_name)
-        retrieval_template = get_template(self.sub_dataset, 'retrieval', self.agent_name)
         result = rag_system.answer_query(
             query=message, 
             top_k=self.retrieve_num, 
-            system_message=system_message, 
-            retrieval_template=retrieval_template
+            system_message=system_message
         )
         retrieval_context = result['context_used']
         
@@ -785,7 +960,7 @@ class AgentWrapper:
         # Build vectorstore if context changed
         if self.context_id != context_id:
             texts = self.chunks
-            from rag.raptor import RAPTORMethod
+            from methods.raptor import RAPTORMethod
             self.raptor_method = RAPTORMethod(texts, max_levels=3)
             print(f"\n\nRaptor build vectorstore finished...\n\n")
         else:
@@ -807,54 +982,9 @@ class AgentWrapper:
             "retrieval_context": retrieval_context,
         }
         
-    def _handle_nv_embed_rag(self, message, query_id, context_id, tokenizer):
-        """Handle NV-Embed RAG processing."""
-        start_time = time.time()
-        
-        # Load the retrieved context from hippo_rag_v2_nv (since the embedding model is the same)
-        query_dir = os.path.join(
-            f"./outputs/rag_retrieved/Structure_rag_hippo_rag_v2_nv", 
-            f'k_{self.retrieve_num}', 
-            self.sub_dataset, 
-            f'chunksize_{self.chunk_size}', 
-            f'query_{query_id}_context_{context_id}.json'
-        )
-        
-        with open(query_dir, 'r') as f:
-            loaded_context = json.load(f)
-            
-        memory_construction_time = time.time() - start_time
-        
-        # Answer the query
-        retrieval_template = get_template(self.sub_dataset, 'retrieval', self.agent_name)
-        retrieval_message = retrieval_template.format(memory=loaded_context)
-        ask_llm_message = retrieval_message + "\n" + message
-        system_message = get_template(self.sub_dataset, 'system', self.agent_name)
-        format_message = format_chat(message=ask_llm_message, system_message=system_message)
-        
-        # Generate response
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=format_message,
-            temperature=self.temperature,
-            max_tokens=self.max_tokens
-        )
-        
-        retrieval_context = loaded_context
-        query_time_len = time.time() - start_time - memory_construction_time
-        
-        return {
-            "output": response.choices[0].message.content,
-            "input_len": response.usage.prompt_tokens,
-            "output_len": response.usage.completion_tokens,
-            "memory_construction_time": memory_construction_time,
-            "query_time_len": query_time_len,
-            "retrieval_context": retrieval_context,
-        }
-        
     def _handle_self_rag(self, message, context_id, tokenizer):
         """Handle Self-RAG processing."""
-        from rag.self_rag import SelfRAG
+        from methods.self_rag import SelfRAG
         start_time = time.time()
         
         # Build vectorstore if context changed
@@ -890,25 +1020,86 @@ class AgentWrapper:
             "retrieval_context": retrieval_context,
         }
 
+    # memorag
+    def _handle_memorag(self, message, context_id, tokenizer):
+        """Handle MemoRAG processing."""
+        from methods.memorag import Agent, MemoRAG
+        start_time = time.time()
+        memory_construction_time = 0
+        cache_context_save_dir=f"./outputs/rag_retrieved/MemoRAG/{self.sub_dataset}/chunksize_{self.chunk_size}/context_id_{context_id}"
+        
+        # build rag agent
+        if self.context_id != context_id:
+            # API configuration
+            endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT")
+            api_version=os.environ.get("AZURE_OPENAI_API_VERSION")
+            api_key=os.environ.get("AZURE_OPENAI_API_KEY")
+            gen_model = Agent(model=self.model, source="azure", temperature=self.temperature, api_dict={"endpoint":endpoint, "api_version":api_version, "api_key":api_key})
+            self.MemoRAG = MemoRAG(
+                mem_model_name_or_path="TommyChien/memorag-qwen2-7b-inst",
+                ret_model_name_or_path="BAAI/bge-m3",   
+                customized_gen_model=gen_model,
+                ret_hit=self.retrieve_num, 
+                retrieval_chunk_size=self.chunk_size
+            )
+            # Use the loaded context / memorize the context for question answering
+            context = " ".join(self.chunks)
+            ## load the context from the cache
+            if os.path.exists(f'{cache_context_save_dir}/memory.bin'):
+                self.MemoRAG.load(cache_context_save_dir, print_stats=True)
+            else:
+                self.MemoRAG.memorize(context, save_dir=None, print_stats=True)
+            memory_construction_time = time.time() - start_time
+            print(f"Finish memorizing, time cost {memory_construction_time}")
+        else:
+            print(f"\n\nContext {context_id} already processed, skipping MemoRAG build vectorstore...\n\n")
+            
+        # Retrieve and answer
+        if self.sub_dataset == "infbench_sum_eng_shots2":
+            response, retrieval_context = self.MemoRAG(query=message, task_type="summarize", max_new_tokens=self.max_tokens)
+        else:
+            response, retrieval_context = self.MemoRAG(query=message, task_type="memorag", max_new_tokens=self.max_tokens)
+        
+        query_time_len = time.time() - start_time - memory_construction_time
+        
+        self.context_id = context_id
+        
+        return {
+            "output": response,
+            "input_len": len(tokenizer.encode(str(retrieval_context) + "\n" + message, disallowed_special=())),
+            "output_len": len(tokenizer.encode(response, disallowed_special=())),
+            "memory_construction_time": memory_construction_time,
+            "query_time_len": query_time_len,
+            "retrieval_context": retrieval_context,
+        }
+        
     def save_agent(self):
         """Save agent state to disk for persistence."""
         # Currently only implemented for Letta agents
-        if not self._is_agent_type("letta"):
+        if not self._is_agent_type("letta") and not self._is_agent_type("zep"):
             print("\n\n Agent not saved (not implemented for this agent type) \n\n")
             return
         
-        agent_save_folder = self.agent_save_to_folder
-        os.makedirs(agent_save_folder, exist_ok=True)
-        
-        import shutil
-        # Copy the SQLite database file to the target folder
-        source_db_path = os.path.expanduser("~/.letta/sqlite.db")
-        target_db_path = f"{agent_save_folder}/sqlite.db"
-        shutil.copyfile(source_db_path, target_db_path)
-        
-        # Save the agent ID for future loading
-        with open(f"{agent_save_folder}/agent_id.txt", "w") as f:
-            f.write(self.agent_state.id)
+        if self._is_agent_type("letta") and "api" not in self.agent_name:
+            agent_save_folder = self.agent_save_to_folder
+            os.makedirs(agent_save_folder, exist_ok=True)
+            
+            import shutil
+            # Copy the SQLite database file to the target folder
+            source_db_path = os.path.expanduser("~/.letta/sqlite.db")
+            target_db_path = f"{agent_save_folder}/sqlite.db"
+            shutil.copyfile(source_db_path, target_db_path)
+            
+            # Save the agent ID for future loading
+            with open(f"{agent_save_folder}/agent_id.txt", "w") as f:
+                f.write(self.agent_state.id)
+        elif self._is_agent_type("zep"):
+            # save the message that agent has processed
+            messages = "agent finished memorization"
+            os.makedirs(self.agent_save_to_folder, exist_ok=True)
+            with open(f"{self.agent_save_to_folder}/messages.txt", "w") as f:
+                f.write(messages)
+                
         print("\n\n Agent saved...\n\n")
 
     def load_agent(self):
@@ -916,24 +1107,31 @@ class AgentWrapper:
         agent_save_folder = self.agent_save_to_folder
         assert os.path.exists(agent_save_folder), f"Folder {agent_save_folder} does not exist."
 
-        if not self._is_agent_type("letta"):
+        if not self._is_agent_type("letta") and not self._is_agent_type("zep"):
             print("\n\nAgent loading not implemented for this agent type\n\n")
             return None
 
-        import shutil
-        # Copy the database file back to the Letta directory
-        source_db_path = f"{agent_save_folder}/sqlite.db"
-        target_db_path = os.path.expanduser("~/.letta/sqlite.db")
-        shutil.copyfile(source_db_path, target_db_path)
+        if self._is_agent_type("letta") and "api" not in self.agent_name:
+            import shutil
+            # Copy the database file back to the Letta directory
+            source_db_path = f"{agent_save_folder}/sqlite.db"
+            target_db_path = os.path.expanduser("~/.letta/sqlite.db")
+            shutil.copyfile(source_db_path, target_db_path)
 
-        # Load agent ID and find the corresponding agent state
-        with open(f"{agent_save_folder}/agent_id.txt", "r") as f:
-            agent_id = f.read()
+            # Load agent ID and find the corresponding agent state
+            with open(f"{agent_save_folder}/agent_id.txt", "r") as f:
+                agent_id = f.read()
 
-        # Find the agent state with the matching ID
-        for agent_state in self.client.list_agents():
-            if agent_state.id == agent_id:
-                self.agent_state = agent_state
-                break
+            # Find the agent state with the matching ID
+            for agent_state in self.client.list_agents():
+                if agent_state.id == agent_id:
+                    self.agent_state = agent_state
+                    break
+        elif self._is_agent_type("zep"):
+            # load the message that agent has processed
+            os.makedirs(self.agent_save_to_folder, exist_ok=True)
+            with open(f"{self.agent_save_to_folder}/messages.txt", "r") as f:
+                messages = f.read()
+        
         print("\n\n Agent loaded successfully...\n\n")
         

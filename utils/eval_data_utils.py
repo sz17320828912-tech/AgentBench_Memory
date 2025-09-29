@@ -1,5 +1,5 @@
 from datasets import load_dataset
-from tasks.eval_other_utils import calculate_metrics, parse_output
+from utils.eval_other_utils import calculate_metrics, parse_output
 import json
 import os
 import random

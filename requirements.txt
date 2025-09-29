@@ -17,9 +17,8 @@ timm
 datasets
 sentence_transformers
 bitsandbytes
-flash-attn
 deepspeed
-minference
+####minference
 
 # NVIDIA CUDA packages
 nvidia-cublas-cu12
@@ -62,7 +61,7 @@ litellm
 instructor
 
 # Database & Vector Storage
-psycopg2
+###psycopg2
 pgvector
 qdrant_client
 lancedb
@@ -93,3 +92,7 @@ accelerate
 
 # Cognee
 owlready2
+
+# Memo RAG
+minference
+flash_attn

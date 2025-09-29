@@ -1,6 +1,6 @@
-from tasks.eval_other_utils import chunk_text_into_sentences
-from tasks.eval_data_utils import load_eval_data
-from tasks.templates import get_template
+from utils.eval_other_utils import chunk_text_into_sentences
+from utils.eval_data_utils import load_eval_data
+from utils.templates import get_template
 
 import logging
 
@@ -58,7 +58,7 @@ class ConversationCreator:
         # Memory agents (mem0, letta, cognee) use agent-specific chunk size
         if agent_config.get('agent_chunk_size') is not None:
             assert any(agent_name in agent_config['agent_name'] 
-                      for agent_name in ["mem0", "letta", "cognee"]), \
+                      for agent_name in ["mem0", "letta", "cognee", "zep"]), \
                    "agent_chunk_size should only be set for memory agents"
             
             chunk_size = agent_config['agent_chunk_size']

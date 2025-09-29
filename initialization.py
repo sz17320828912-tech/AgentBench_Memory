@@ -7,7 +7,7 @@ from collections import defaultdict
 from conversation_creator import ConversationCreator
 from agent import AgentWrapper
 from tqdm import tqdm
-from tasks.eval_other_utils import metrics_summarization
+from utils.eval_other_utils import metrics_summarization
 
 
 # ============================================================================
@@ -133,7 +133,7 @@ def generate_agent_save_folder(agent_config, dataset_config, current_context_ind
     agent_name = agent_config['agent_name']
     
     # Generate base path based on agent type
-    if any(agent_type in agent_name for agent_type in ["mem0", "cognee", "letta"]):
+    if any(agent_type in agent_name for agent_type in ["mem0", "cognee", "letta", "zep"]):
         base_path = _generate_memory_agent_base_path(agent_config, dataset_config)
         return f"{base_path}/exp_{current_context_index}"
     elif "rag" in agent_name:
@@ -199,7 +199,7 @@ def _apply_chunk_size_ablation(command_line_args, agent_config, dataset_config):
     new_chunk_size = command_line_args.chunk_size_ablation
     
     # Check if this is a memory agent that uses agent_chunk_size
-    if any(agent_name in agent_config['agent_name'] for agent_name in ['mem0', 'letta', 'cognee']):
+    if any(agent_name in agent_config['agent_name'] for agent_name in ['mem0', 'letta', 'cognee', 'zep']):
         agent_config['agent_chunk_size'] = new_chunk_size
         dataset_config['chunk_size'] = new_chunk_size
         print(f"\n\nUsing agent chunk_size: {agent_config['agent_chunk_size']}\n\n")
@@ -268,7 +268,7 @@ def _generate_output_name_tag(agent_config, dataset_config):
             f"chunk{safe_get(agent_config, 'agent_chunk_size')}",
             f"mode{safe_get(agent_config, 'letta_mode')}"
         ]
-    elif any(agent_type in agent_name for agent_type in ["mem0", "cognee"]):
+    elif any(agent_type in agent_name for agent_type in ["mem0", "cognee", "zep"]):
         agent_components = [
             f"k{safe_get(agent_config, 'retrieve_num')}",
             f"chunk{safe_get(agent_config, 'agent_chunk_size')}"
@@ -313,7 +313,7 @@ def _calculate_last_completed_context_id(all_query_answer_pairs, total_queries_p
 # ============================================================================
 
 def _generate_memory_agent_base_path(agent_config, dataset_config):
-    """Generate base path for memory agents (letta, mem0, cognee)."""
+    """Generate base path for memory agents (letta, mem0, cognee, zep)."""
     agent_name = agent_config['agent_name']
     base_path = f"./agents/{agent_name}_{dataset_config['sub_dataset']}_chunk{agent_config['agent_chunk_size']}_model{agent_config['model']}"
     

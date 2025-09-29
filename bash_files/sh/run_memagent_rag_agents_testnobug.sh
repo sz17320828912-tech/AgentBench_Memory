@@ -19,7 +19,7 @@ for line in {5..16}
         CUDA_VISIBLE_DEVICES=4,5,6,7 python main.py \
                                             --agent_config                 configs/agent_conf/RAG_Agents/gpt-4o-mini/${agent_config} \
                                             --dataset_config               configs/data_conf/${dataset_config} \
-                                            --max_test_queries_ablation      1
+                                            --max_test_queries_ablation      4
         echo ................End...........
 
     done
