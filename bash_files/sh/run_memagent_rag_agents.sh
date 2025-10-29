@@ -16,7 +16,7 @@ for line in {204..204..1}
         dataset_config=$(echo $cfg | cut -f 2 -d ' ')
 
         echo ................Start........... 
-        CUDA_VISIBLE_DEVICES=6 python main.py \
+        CUDA_VISIBLE_DEVICES=0 python main.py \
                                             --agent_config      configs/agent_conf/RAG_Agents/gpt-4o-mini/${agent_config} \
                                             --dataset_config    configs/data_conf/${dataset_config} 
         echo ................End...........
